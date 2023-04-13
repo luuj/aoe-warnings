@@ -193,6 +193,15 @@ public class AoeWarningPlugin extends Plugin
 				return config.isOlmEnabled();
 			case VERZIK_PURPLE_SPAWN:
 				return config.isVerzikEnabled();
+			case KEPHRI_FIREBALL:
+			case KEPHRI_DRONE:
+				return config.isKephriEnabled();
+			case ZEBAK_SPLAT1:
+			case ZEBAK_SPLAT2:
+				return config.isZebakEnabled();
+			case WARDEN_BOMB:
+			case WARDEN_STUN:
+				return config.isWardenEnabled();
 		}
 
 		return false;

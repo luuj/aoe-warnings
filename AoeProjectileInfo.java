@@ -3,12 +3,17 @@ package net.runelite.client.plugins.aoewarnings;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public enum AoeProjectileInfo
 {
 	LIZARDMAN_SHAMAN_AOE(1293, 5),
 	ICE_DEMON_RANGED_AOE(1324, 3),
 	ICE_DEMON_ICE_BARRAGE_AOE(366, 3),
+	KEPHRI_FIREBALL(2266,3),
+	KEPHRI_DRONE(2147,3),
+	ZEBAK_SPLAT1(1555,1),
+	ZEBAK_SPLAT2(2194,1),
+	WARDEN_STUN(2210,1),
+	WARDEN_BOMB(2225,7),
 	VASA_AWAKEN_AOE(1327, 3),
 	VASA_RANGED_AOE(1329, 3),
 	TEKTON_METEOR_AOE(660, 3),

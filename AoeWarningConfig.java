@@ -236,4 +236,40 @@ public interface AoeWarningConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+			keyName = "kephri",
+			name = "Kephri",
+			description = "Configures if Kephri fireball AOE is shown",
+			section = npcTitle,
+			position = 19
+	)
+	default boolean isKephriEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			keyName = "zebak",
+			name = "Zebak",
+			description = "Configures if Zebak poison AOE is shown",
+			section = npcTitle,
+			position = 20
+	)
+	default boolean isZebakEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			keyName = "warden",
+			name = "Warden",
+			description = "Configures if Warden stunlock and bomb AOEs are shown",
+			section = npcTitle,
+			position = 21
+	)
+	default boolean isWardenEnabled()
+	{
+		return true;
+	}
 }
