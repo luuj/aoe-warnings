@@ -18,8 +18,8 @@ public enum AoeProjectileInfo
 	VASA_RANGED_AOE(1329, 3),
 	TEKTON_METEOR_AOE(660, 3),
 	OLM_FALLING_CRYSTAL(1357, 3),
-	VERZIK_PURPLE_SPAWN(12, 3),
-	VERZIK_P1_ROCKS(12, 1);
+	VERZIK_PURPLE_SPAWN(1586, 3),
+	VERZIK_P1_ROCKS(1435, 1);
 
 	private static final Map<Integer, AoeProjectileInfo> map = new HashMap<>();
 
