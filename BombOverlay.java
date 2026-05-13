@@ -8,9 +8,7 @@ import java.awt.Polygon;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -71,8 +69,12 @@ public class BombOverlay extends Overlay
 
 	private void drawDangerZone(Graphics2D graphics)
 	{
+		if (client.getLocalPlayer() == null)
+		{
+			return;
+		}
+
 		final WorldPoint loc = client.getLocalPlayer().getWorldLocation();
-		Map<WorldPoint, Integer> aoeTiles = new HashMap<>();
 		plugin.getBombs().forEach(bomb ->
 		{
 			final LocalPoint localLoc = LocalPoint.fromWorld(client, bomb.getWorldLocation());
@@ -83,33 +85,33 @@ public class BombOverlay extends Overlay
 				return;
 			}
 
-			final double distance_x = Math.abs(worldLoc.getX() - loc.getX());
-			final double distance_y = Math.abs(worldLoc.getY() - loc.getY());
+			final double distanceX = Math.abs(worldLoc.getX() - loc.getX());
+			final double distanceY = Math.abs(worldLoc.getY() - loc.getY());
 
-			Color color_code = Color.decode(SAFE);
+			Color colorCode = Color.decode(SAFE);
 
-			if (distance_x < 1 && distance_y < 1)
+			if (distanceX < 1 && distanceY < 1)
 			{
-				color_code = Color.decode(LETHAL);
+				colorCode = Color.decode(LETHAL);
 			}
-			else if (distance_x < 2 && distance_y < 2)
+			else if (distanceX < 2 && distanceY < 2)
 			{
-				color_code = Color.decode(DANGER);
+				colorCode = Color.decode(DANGER);
 			}
-			else if (distance_x < 3 && distance_y < 3)
+			else if (distanceX < 3 && distanceY < 3)
 			{
-				color_code = Color.decode(WARNING);
+				colorCode = Color.decode(WARNING);
 			}
-			else if (distance_x < 4 && distance_y < 4)
+			else if (distanceX < 4 && distanceY < 4)
 			{
-				color_code = Color.decode(CAUTION);
+				colorCode = Color.decode(CAUTION);
 			}
-			final LocalPoint CenterPoint = new LocalPoint(localLoc.getX(), localLoc.getY());
-			final Polygon poly = Perspective.getCanvasTileAreaPoly(client, CenterPoint, BOMB_AOE);
+			final LocalPoint centerPoint = new LocalPoint(localLoc.getX(), localLoc.getY());
+			final Polygon poly = Perspective.getCanvasTileAreaPoly(client, centerPoint, BOMB_AOE);
 
 			if (poly != null)
 			{
-				graphics.setColor(color_code);
+				graphics.setColor(colorCode);
 				graphics.setStroke(new BasicStroke(1));
 				graphics.drawPolygon(poly);
 				graphics.setColor(new Color(0, 0, 0, 10));
@@ -129,30 +131,9 @@ public class BombOverlay extends Overlay
 			if (canvasPoint != null)
 			{
 				Point canvasCenterPoint = new Point(canvasPoint.getX() - textWidth / 2, canvasPoint.getY() + textHeight / 2);
-				OverlayUtil.renderTextLocation(graphics, canvasCenterPoint, bombTimerString, color_code);
+				OverlayUtil.renderTextLocation(graphics, canvasCenterPoint, bombTimerString, colorCode);
 			}
 		});
 
-		aoeTiles.forEach((tile, count) ->
-		{
-			LocalPoint localPoint = LocalPoint.fromWorld(client, tile);
-
-			if (localPoint == null)
-				return;
-
-			Color color = Color.decode(SAFE);
-
-			if (count == 2)
-				color = Color.decode(CAUTION);
-			if (count == 3)
-				color = Color.decode(WARNING);
-			if (count == 4)
-				color = Color.decode(DANGER);
-			if (count >= 5)
-				color = Color.decode(LETHAL);
-
-			graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 50));
-			graphics.fill(Perspective.getCanvasTilePoly(client, localPoint));
-		});
 	}
 }

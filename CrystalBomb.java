@@ -21,6 +21,7 @@ class CrystalBomb
 		this.gameObject = gameObject;
 		this.objectId = gameObject.getId();
 		this.plantedOn = Instant.now();
+		this.lastClockUpdate = plantedOn;
 		this.worldLocation = gameObject.getWorldLocation();
 		this.tickStarted = startTick;
 	}

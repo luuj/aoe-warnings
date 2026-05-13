@@ -13,8 +13,6 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
-import net.runelite.api.Varbits;
-import net.runelite.api.coords.WorldPoint;
 import static net.runelite.client.plugins.aoewarnings.ColorUtil.setAlphaComponent;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -43,7 +41,10 @@ public class AoeWarningOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		WorldPoint lp = client.getLocalPlayer().getWorldLocation();
+		if (client.getLocalPlayer() == null)
+		{
+			return null;
+		}
 		Instant now = Instant.now();
 		Set<ProjectileContainer> projectiles = plugin.getProjectiles();
 		projectiles.forEach(proj ->
@@ -69,6 +70,7 @@ public class AoeWarningOverlay extends Overlay
 			final double progress = (System.currentTimeMillis() - proj.getStartTime().toEpochMilli()) / (double) proj.getLifetime();
 
 			final int tickProgress = proj.getFinalTick() - client.getTickCount();
+			final Color overlayColor = config.overlayColor();
 			int fillAlpha, outlineAlpha;
 			if (config.isFadeEnabled())
 			{
@@ -89,27 +91,12 @@ public class AoeWarningOverlay extends Overlay
 				color = Color.WHITE;
 			}
 
-			if (fillAlpha < 0)
-			{
-				fillAlpha = 0;
-			}
-			if (outlineAlpha < 0)
-			{
-				outlineAlpha = 0;
-			}
-
-			if (fillAlpha > 255)
-			{
-				fillAlpha = 255;
-			}
-			if (outlineAlpha > 255)
-			{
-				outlineAlpha = 255;
-			}
+			fillAlpha = applyConfigAlpha(fillAlpha, overlayColor);
+			outlineAlpha = applyConfigAlpha(outlineAlpha, overlayColor);
 
 			if (config.isOutlineEnabled())
 			{
-				graphics.setColor(new Color(setAlphaComponent(config.overlayColor().getRGB(), outlineAlpha), true));
+				graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), outlineAlpha), true));
 				graphics.drawPolygon(tilePoly);
 			}
 			if (config.tickTimers() && tickProgress >= 0)
@@ -118,11 +105,16 @@ public class AoeWarningOverlay extends Overlay
 					config.fontStyle().getFont(), color, centerPoint(tilePoly.getBounds()), config.shadows(), 0);
 			}
 
-			graphics.setColor(new Color(setAlphaComponent(config.overlayColor().getRGB(), fillAlpha), true));
+			graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), fillAlpha), true));
 			graphics.fillPolygon(tilePoly);
 		});
 		projectiles.removeIf(proj -> now.isAfter(proj.getStartTime().plus(Duration.ofMillis(proj.getLifetime()))));
 		return null;
+	}
+
+	private static int applyConfigAlpha(int alpha, Color color)
+	{
+		return Math.max(0, Math.min(255, alpha * color.getAlpha() / 255));
 	}
 
 	private Point centerPoint(Rectangle rect)

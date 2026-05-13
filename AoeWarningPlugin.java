@@ -23,7 +23,6 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.apache.commons.lang3.ArrayUtils;
-import static net.runelite.client.plugins.aoewarnings.AoeWarningConfig.*;
 
 
 @PluginDescriptor(
@@ -99,6 +98,7 @@ public class AoeWarningPlugin extends Plugin
 		final int tickCycle = client.getTickCount() + ticksRemaining;
 		if (isConfigEnabledForProjectileId(id, false))
 		{
+			projectiles.removeIf(proj -> proj.getProjectile() == projectile);
 			projectiles.add(new ProjectileContainer(projectile, Instant.now(), lifetime, tickCycle, event.getPosition()));
 		}
 
@@ -189,6 +189,7 @@ public class AoeWarningPlugin extends Plugin
 				{
 					return config.isVerzikEnabled();
 				}
+				return false;
 			case OLM_FALLING_CRYSTAL:
 				return config.isOlmEnabled();
 			case VERZIK_PURPLE_SPAWN:

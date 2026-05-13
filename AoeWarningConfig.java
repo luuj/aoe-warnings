@@ -6,6 +6,7 @@ import java.awt.Font;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -40,6 +41,7 @@ public interface AoeWarningConfig extends Config
 	)
 	String overlayTitle = "Overlay";
 
+	@Alpha
 	@ConfigItem(
 		position = 2,
 		keyName = "overlayColor",
@@ -49,7 +51,7 @@ public interface AoeWarningConfig extends Config
 	)
 	default Color overlayColor()
 	{
-		return new Color(0, 150, 200);
+		return new Color(0, 150, 200, 255);
 	}
 
 	@ConfigItem(
