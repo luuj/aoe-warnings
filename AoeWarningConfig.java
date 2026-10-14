@@ -274,4 +274,23 @@ public interface AoeWarningConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigSection(
+		name = "Custom AOEs",
+		description = "",
+		position = 22
+	)
+	String customAoesTitle = "Custom AOEs";
+
+	@ConfigItem(
+		keyName = "customAoes",
+		name = "Custom AOEs",
+		description = "Enter each custom AoE as {projectile ID, size}, for example {1234,3},{5678,1}. Sizes must be between 1 and 15. Listed built-in IDs override their normal toggle and size.",
+		section = customAoesTitle,
+		position = 23
+	)
+	default String customAoes()
+	{
+		return "";
+	}
 }

@@ -12,18 +12,18 @@ class ProjectileContainer
 {
 	private Projectile projectile;
 	private Instant startTime;
-	private AoeProjectileInfo aoeProjectileInfo;
+	private int aoeSize;
 	private int lifetime;
 	private int finalTick;
 	@Setter(AccessLevel.PACKAGE)
 	private LocalPoint targetPoint;
 
-	ProjectileContainer(Projectile projectile, Instant startTime, int lifetime, int finalTick, LocalPoint targetPoint)
+	ProjectileContainer(Projectile projectile, Instant startTime, int lifetime, int finalTick, LocalPoint targetPoint, int aoeSize)
 	{
 		this.projectile = projectile;
 		this.startTime = startTime;
 		this.targetPoint = targetPoint;
-		this.aoeProjectileInfo = AoeProjectileInfo.getById(projectile.getId());
+		this.aoeSize = aoeSize;
 		this.lifetime = lifetime;
 		this.finalTick = finalTick;
 	}

@@ -4,6 +4,8 @@ import com.google.inject.Provides;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -55,6 +57,7 @@ public class AoeWarningPlugin extends Plugin
 	private Client client;
 
 	private static final int VERZIK_REGION = 12611;
+	private static final Pattern CUSTOM_AOE_PATTERN = Pattern.compile("\\{\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\}");
 
 	@Provides
 	AoeWarningConfig getConfig(ConfigManager configManager)
@@ -82,13 +85,14 @@ public class AoeWarningPlugin extends Plugin
 	private void onProjectileMoved(ProjectileMoved event)
 	{
 		final Projectile projectile = event.getProjectile();
+		final int id = projectile.getId();
+		final Integer aoeSize = getAoeSize(id);
 
-		if (AoeProjectileInfo.getById(projectile.getId()) == null)
+		if (aoeSize == null)
 		{
 			return;
 		}
 
-		final int id = projectile.getId();
 		final int lifetime = config.delay() + (projectile.getRemainingCycles() * 20);
 		int ticksRemaining = projectile.getRemainingCycles() / 30;
 		if (!isTickTimersEnabledForProjectileID(id))
@@ -99,7 +103,7 @@ public class AoeWarningPlugin extends Plugin
 		if (isConfigEnabledForProjectileId(id, false))
 		{
 			projectiles.removeIf(proj -> proj.getProjectile() == projectile);
-			projectiles.add(new ProjectileContainer(projectile, Instant.now(), lifetime, tickCycle, event.getPosition()));
+			projectiles.add(new ProjectileContainer(projectile, Instant.now(), lifetime, tickCycle, event.getPosition(), aoeSize));
 		}
 
 	}
@@ -148,11 +152,16 @@ public class AoeWarningPlugin extends Plugin
 
 	private boolean isTickTimersEnabledForProjectileID(int projectileId)
 	{
+		if (isCustomProjectileId(projectileId))
+		{
+			return true;
+		}
+
 		AoeProjectileInfo projectileInfo = AoeProjectileInfo.getById(projectileId);
 
 		if (projectileInfo == null)
 		{
-			return false;
+			return isCustomProjectileId(projectileId);
 		}
 
 		switch (projectileInfo)
@@ -166,10 +175,15 @@ public class AoeWarningPlugin extends Plugin
 
 	private boolean isConfigEnabledForProjectileId(int projectileId, boolean notify)
 	{
+		if (isCustomProjectileId(projectileId))
+		{
+			return true;
+		}
+
 		AoeProjectileInfo projectileInfo = AoeProjectileInfo.getById(projectileId);
 		if (projectileInfo == null)
 		{
-			return false;
+			return isCustomProjectileId(projectileId);
 		}
 
 		switch (projectileInfo)
@@ -206,6 +220,51 @@ public class AoeWarningPlugin extends Plugin
 		}
 
 		return false;
+	}
+
+	private Integer getAoeSize(int projectileId)
+	{
+		Integer customAoeSize = getCustomAoeSize(projectileId);
+		if (customAoeSize != null)
+		{
+			return customAoeSize;
+		}
+
+		AoeProjectileInfo projectileInfo = AoeProjectileInfo.getById(projectileId);
+		if (projectileInfo != null)
+		{
+			return projectileInfo.getAoeSize();
+		}
+
+		return null;
+	}
+
+	private boolean isCustomProjectileId(int projectileId)
+	{
+		return getCustomAoeSize(projectileId) != null;
+	}
+
+	private Integer getCustomAoeSize(int projectileId)
+	{
+		Matcher matcher = CUSTOM_AOE_PATTERN.matcher(config.customAoes());
+		while (matcher.find())
+		{
+			try
+			{
+				int id = Integer.parseInt(matcher.group(1));
+				int size = Integer.parseInt(matcher.group(2));
+				if (id == projectileId && size >= 1 && size <= 15)
+				{
+					return size;
+				}
+			}
+			catch (NumberFormatException ignored)
+			{
+				// Ignore malformed entries so a single typo does not disable valid IDs.
+			}
+		}
+
+		return null;
 	}
 
 	private void reset()
