@@ -5,14 +5,13 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Set;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
+import net.runelite.api.Projectile;
 import static net.runelite.client.plugins.aoewarnings.ColorUtil.setAlphaComponent;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -41,74 +40,65 @@ public class AoeWarningOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (client.getLocalPlayer() == null)
+		Map<Projectile, ProjectileContainer> projectiles = plugin.getProjectiles();
+		if (projectiles.isEmpty() || client.getLocalPlayer() == null)
 		{
 			return null;
 		}
-		Instant now = Instant.now();
-		Set<ProjectileContainer> projectiles = plugin.getProjectiles();
-		projectiles.forEach(proj ->
-		{
-			if (proj.getTargetPoint() == null)
-			{
-				return;
-			}
-			Color color;
 
-			if (now.isAfter(proj.getStartTime().plus(Duration.ofMillis(proj.getLifetime()))))
+		// Read the clock and config once per frame rather than once per projectile.
+		final long now = System.currentTimeMillis();
+		final int tickCount = client.getTickCount();
+		final Color overlayColor = config.overlayColor();
+		final boolean fade = config.isFadeEnabled();
+		final boolean outline = config.isOutlineEnabled();
+		final boolean tickTimers = config.tickTimers();
+		final int textSize = config.textSize();
+		final int fontStyle = config.fontStyle().getFont();
+		final boolean shadows = config.shadows();
+
+		for (ProjectileContainer proj : projectiles.values())
+		{
+			if (proj.getTargetPoint() == null || proj.isExpired(now))
 			{
-				return;
+				continue;
 			}
 
 			final Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, proj.getTargetPoint(), proj.getAoeSize());
-
 			if (tilePoly == null)
 			{
-				return;
+				continue;
 			}
 
-			final double progress = (System.currentTimeMillis() - proj.getStartTime().toEpochMilli()) / (double) proj.getLifetime();
-
-			final int tickProgress = proj.getFinalTick() - client.getTickCount();
-			final Color overlayColor = config.overlayColor();
-			int fillAlpha, outlineAlpha;
-			if (config.isFadeEnabled())
+			int fillAlpha = FILL_START_ALPHA;
+			int outlineAlpha = OUTLINE_START_ALPHA;
+			if (fade)
 			{
+				final double progress = (now - proj.getStartTimeMillis()) / (double) proj.getLifetime();
 				fillAlpha = (int) ((1 - progress) * FILL_START_ALPHA);
 				outlineAlpha = (int) ((1 - progress) * OUTLINE_START_ALPHA);
 			}
-			else
-			{
-				fillAlpha = FILL_START_ALPHA;
-				outlineAlpha = OUTLINE_START_ALPHA;
-			}
-			if (tickProgress == 0)
-			{
-				color = Color.RED;
-			}
-			else
-			{
-				color = Color.WHITE;
-			}
-
 			fillAlpha = applyConfigAlpha(fillAlpha, overlayColor);
 			outlineAlpha = applyConfigAlpha(outlineAlpha, overlayColor);
 
-			if (config.isOutlineEnabled())
+			// Fill first so the translucent fill doesn't sit on top of the outline and timer text.
+			graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), fillAlpha), true));
+			graphics.fillPolygon(tilePoly);
+
+			if (outline)
 			{
 				graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), outlineAlpha), true));
 				graphics.drawPolygon(tilePoly);
 			}
-			if (config.tickTimers() && tickProgress >= 0)
-			{
-				OverlayUtil.renderTextLocation(graphics, Integer.toString(tickProgress), config.textSize(),
-					config.fontStyle().getFont(), color, centerPoint(tilePoly.getBounds()), config.shadows(), 0);
-			}
 
-			graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), fillAlpha), true));
-			graphics.fillPolygon(tilePoly);
-		});
-		projectiles.removeIf(proj -> now.isAfter(proj.getStartTime().plus(Duration.ofMillis(proj.getLifetime()))));
+			final int tickProgress = proj.getFinalTick() - tickCount;
+			if (tickTimers && tickProgress >= 0)
+			{
+				OverlayUtil.renderTextLocation(graphics, Integer.toString(tickProgress), textSize, fontStyle,
+					tickProgress == 0 ? Color.RED : Color.WHITE, centerPoint(tilePoly.getBounds()), shadows, 0);
+			}
+		}
+
 		return null;
 	}
 
@@ -117,7 +107,7 @@ public class AoeWarningOverlay extends Overlay
 		return Math.max(0, Math.min(255, alpha * color.getAlpha() / 255));
 	}
 
-	private Point centerPoint(Rectangle rect)
+	private static Point centerPoint(Rectangle rect)
 	{
 		int x = (int) (rect.getX() + rect.getWidth() / 2);
 		int y = (int) (rect.getY() + rect.getHeight() / 2);

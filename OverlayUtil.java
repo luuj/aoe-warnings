@@ -1,81 +1,52 @@
 package net.runelite.client.plugins.aoewarnings;
 
 import com.google.common.base.Strings;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
-import net.runelite.api.Client;
-import net.runelite.api.Perspective;
 import net.runelite.api.Point;
-import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.coords.WorldPoint;
 
 public class OverlayUtil
 {
-	public static void drawTiles(Graphics2D graphics, Client client, WorldPoint point, WorldPoint playerPoint, Color color, int strokeWidth, int outlineAlpha, int fillAlpha)
-	{
-		if (point.distanceTo(playerPoint) >= 32)
-		{
-			return;
-		}
-		LocalPoint lp = LocalPoint.fromWorld(client, point);
-		if (lp == null)
-		{
-			return;
-		}
+	private static Font cachedFont;
 
-		Polygon poly = Perspective.getCanvasTilePoly(client, lp);
-		if (poly == null)
-		{
-			return;
-		}
-		drawStrokeAndFillPoly(graphics, color, strokeWidth, outlineAlpha, fillAlpha, poly);
-	}
-
-	public static void drawStrokeAndFillPoly(Graphics2D graphics, Color color, int strokeWidth, int outlineAlpha, int fillAlpha, Polygon poly)
+	private OverlayUtil()
 	{
-		graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), outlineAlpha));
-		graphics.setStroke(new BasicStroke(strokeWidth));
-		graphics.draw(poly);
-		graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), fillAlpha));
-		graphics.fill(poly);
 	}
 
 	public static void renderTextLocation(Graphics2D graphics, String txtString, int fontSize, int fontStyle, Color fontColor, Point canvasPoint, boolean shadows, int yOffset)
 	{
-		graphics.setFont(new Font("Arial", fontStyle, fontSize));
-		if (canvasPoint != null)
-		{
-			final Point canvasCenterPoint = new Point(
-				canvasPoint.getX(),
-				canvasPoint.getY() + yOffset);
-			final Point canvasCenterPoint_shadow = new Point(
-				canvasPoint.getX() + 1,
-				canvasPoint.getY() + 1 + yOffset);
-			if (shadows)
-			{
-				renderTextLocation(graphics, canvasCenterPoint_shadow, txtString, Color.BLACK);
-			}
-			renderTextLocation(graphics, canvasCenterPoint, txtString, fontColor);
-		}
-	}
-
-	public static void renderTextLocation(Graphics2D graphics, Point txtLoc, String text, Color color)
-	{
-		if (Strings.isNullOrEmpty(text))
+		if (canvasPoint == null || Strings.isNullOrEmpty(txtString))
 		{
 			return;
 		}
 
-		int x = txtLoc.getX();
-		int y = txtLoc.getY();
+		graphics.setFont(getFont(fontStyle, fontSize));
 
-		graphics.setColor(Color.BLACK);
-		graphics.drawString(text, x + 1, y + 1);
+		int x = canvasPoint.getX();
+		int y = canvasPoint.getY() + yOffset;
 
-		graphics.setColor(color);
-		graphics.drawString(text, x, y);
+		// The shadow is now controlled solely by the "Shadows" setting. Previously a shadow was
+		// always drawn, and enabling the setting stacked a second one on top.
+		if (shadows)
+		{
+			graphics.setColor(Color.BLACK);
+			graphics.drawString(txtString, x + 1, y + 1);
+		}
+
+		graphics.setColor(fontColor);
+		graphics.drawString(txtString, x, y);
+	}
+
+	// Fonts are reused across frames instead of allocating a new Font per label.
+	private static Font getFont(int style, int size)
+	{
+		Font font = cachedFont;
+		if (font == null || font.getStyle() != style || font.getSize() != size)
+		{
+			font = new Font("Arial", style, size);
+			cachedFont = font;
+		}
+		return font;
 	}
 }
