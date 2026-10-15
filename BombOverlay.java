@@ -79,6 +79,7 @@ public class BombOverlay extends Overlay
 		final WorldPoint loc = player.getWorldLocation();
 		final long now = System.currentTimeMillis();
 		final int tickCount = client.getTickCount();
+		graphics.setFont(config.font().getFont());
 		final FontMetrics fm = graphics.getFontMetrics();
 
 		for (CrystalBomb bomb : plugin.getBombs())

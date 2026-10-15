@@ -1,166 +1,38 @@
-
 package net.runelite.client.plugins.aoewarnings;
 
 import java.awt.Color;
-import java.awt.Font;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.FontType;
 import net.runelite.client.config.Range;
+import net.runelite.client.config.Units;
 
 @ConfigGroup("aoe")
 public interface AoeWarningConfig extends Config
 {
-	@Getter(AccessLevel.PACKAGE)
-	@AllArgsConstructor
-	enum FontStyle
-	{
-		BOLD("Bold", Font.BOLD),
-		ITALIC("Italic", Font.ITALIC),
-		PLAIN("Plain", Font.PLAIN);
-
-		private String name;
-		private int font;
-
-		@Override
-		public String toString()
-		{
-			return getName();
-		}
-	}
-
 	@ConfigSection(
-		name = "Overlay",
-		description = "",
-		position = 1
-	)
-	String overlayTitle = "Overlay";
-
-	@Alpha
-	@ConfigItem(
-		position = 2,
-		keyName = "overlayColor",
-		name = "Overlay Color",
-		description = "Configures the color of the AoE Projectile Warnings overlay",
-		section = overlayTitle
-	)
-	default Color overlayColor()
-	{
-		return new Color(0, 150, 200, 255);
-	}
-
-	@ConfigItem(
-		keyName = "outline",
-		name = "Display Outline",
-		description = "Configures whether or not AoE Projectile Warnings have an outline",
-		section = overlayTitle,
-		position = 3
-	)
-	default boolean isOutlineEnabled()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "delay",
-		name = "Fade Delay",
-		description = "Configures the amount of time in milliseconds that the warning lingers for after the projectile has touched the ground",
-		section = overlayTitle,
-		position = 4
-	)
-	default int delay()
-	{
-		return 300;
-	}
-
-	@ConfigItem(
-		keyName = "fade",
-		name = "Fade Warnings",
-		description = "Configures whether or not AoE Projectile Warnings fade over time",
-		section = overlayTitle,
-		position = 5
-	)
-	default boolean isFadeEnabled()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "tickTimers",
-		name = "Tick Timers",
-		description = "Configures whether or not AoE Projectile Warnings has tick timers overlaid as well.",
-		section = overlayTitle,
-		position = 6
-	)
-	default boolean tickTimers()
-	{
-		return true;
-	}
-
-	@ConfigSection(
-		position = 7,
-		name = "Text",
-		description = ""
-	)
-	String textTitle = "Text";
-
-	@ConfigItem(
-		position = 8,
-		keyName = "fontStyle",
-		name = "Font Style",
-		description = "Bold/Italics/Plain",
-		section = textTitle
-	)
-	default FontStyle fontStyle()
-	{
-		return FontStyle.BOLD;
-	}
-
-	@Range(
-		min = 10,
-		max = 40
-	)
-	@ConfigItem(
-		position = 9,
-		keyName = "textSize",
-		name = "Text Size",
-		description = "Text Size for Timers.",
-		section = textTitle
-	)
-	default int textSize()
-	{
-		return 32;
-	}
-
-	@ConfigItem(
-		position = 10,
-		keyName = "shadows",
-		name = "Shadows",
-		description = "Adds Shadows to text.",
-		section = textTitle
-	)
-	default boolean shadows()
-	{
-		return true;
-	}
-	@ConfigSection(
-		name = "NPC AOEs",
-		description = "",
-		position = 11
+		name = "AoE attacks",
+		description = "Which AoE attacks to mark",
+		position = 0
 	)
 	String npcTitle = "NPC AOEs";
 
+	@ConfigSection(
+		name = "Appearance",
+		description = "How the overlay is drawn",
+		position = 1
+	)
+	String appearanceSection = "appearanceSection";
+
 	@ConfigItem(
 		keyName = "lizardmanaoe",
-		name = "Lizardman Shamans",
-		description = "Configures whether or not AoE Projectile Warnings for Lizardman Shamans is displayed",
-		section = npcTitle,
-		position = 12
+		name = "Lizardman shamans",
+		description = "Mark where Lizardman shaman acid lands",
+		position = 0,
+		section = npcTitle
 	)
 	default boolean isShamansEnabled()
 	{
@@ -169,10 +41,10 @@ public interface AoeWarningConfig extends Config
 
 	@ConfigItem(
 		keyName = "icedemon",
-		name = "Ice Demon",
-		description = "Configures whether or not AoE Projectile Warnings for Ice Demon is displayed",
-		section = npcTitle,
-		position = 13
+		name = "Ice demon",
+		description = "Mark where the Ice demon's attacks land",
+		position = 1,
+		section = npcTitle
 	)
 	default boolean isIceDemonEnabled()
 	{
@@ -182,9 +54,9 @@ public interface AoeWarningConfig extends Config
 	@ConfigItem(
 		keyName = "vasa",
 		name = "Vasa",
-		description = "Configures whether or not AoE Projectile Warnings for Vasa is displayed",
-		section = npcTitle,
-		position = 14
+		description = "Mark where Vasa's rocks land",
+		position = 2,
+		section = npcTitle
 	)
 	default boolean isVasaEnabled()
 	{
@@ -194,9 +66,9 @@ public interface AoeWarningConfig extends Config
 	@ConfigItem(
 		keyName = "tekton",
 		name = "Tekton",
-		description = "Configures whether or not AoE Projectile Warnings for Tekton is displayed",
-		section = npcTitle,
-		position = 15
+		description = "Mark where Tekton's meteors land",
+		position = 3,
+		section = npcTitle
 	)
 	default boolean isTektonEnabled()
 	{
@@ -205,10 +77,10 @@ public interface AoeWarningConfig extends Config
 
 	@ConfigItem(
 		keyName = "olm",
-		name = "Olm Crystals",
-		description = "Configures whether or not AoE Projectile Warnings for The Great Olm are displayed",
-		section = npcTitle,
-		position = 16
+		name = "Olm crystals",
+		description = "Mark where the Great Olm's falling crystals land",
+		position = 4,
+		section = npcTitle
 	)
 	default boolean isOlmEnabled()
 	{
@@ -217,10 +89,10 @@ public interface AoeWarningConfig extends Config
 
 	@ConfigItem(
 		keyName = "bombDisplay",
-		name = "Olm Bombs",
-		description = "Display a timer and colour-coded AoE for Olm's crystal-phase bombs.",
-		section = npcTitle,
-		position = 17
+		name = "Olm bombs",
+		description = "Mark the Great Olm's crystal bombs with a timer, colored by how close you are",
+		position = 5,
+		section = npcTitle
 	)
 	default boolean bombDisplay()
 	{
@@ -230,9 +102,9 @@ public interface AoeWarningConfig extends Config
 	@ConfigItem(
 		keyName = "verzik",
 		name = "Verzik",
-		description = "Configures if Verzik purple Nylo/falling rock AOE is shown",
-		section = npcTitle,
-		position = 18
+		description = "Mark where Verzik's purple Nylocas and falling rocks land",
+		position = 6,
+		section = npcTitle
 	)
 	default boolean isVerzikEnabled()
 	{
@@ -240,11 +112,11 @@ public interface AoeWarningConfig extends Config
 	}
 
 	@ConfigItem(
-			keyName = "kephri",
-			name = "Kephri",
-			description = "Configures if Kephri fireball AOE is shown",
-			section = npcTitle,
-			position = 19
+		keyName = "kephri",
+		name = "Kephri",
+		description = "Mark where Kephri's fireballs land",
+		position = 7,
+		section = npcTitle
 	)
 	default boolean isKephriEnabled()
 	{
@@ -252,11 +124,11 @@ public interface AoeWarningConfig extends Config
 	}
 
 	@ConfigItem(
-			keyName = "zebak",
-			name = "Zebak",
-			description = "Configures if Zebak poison AOE is shown",
-			section = npcTitle,
-			position = 20
+		keyName = "zebak",
+		name = "Zebak",
+		description = "Mark where Zebak's poison lands",
+		position = 8,
+		section = npcTitle
 	)
 	default boolean isZebakEnabled()
 	{
@@ -264,33 +136,130 @@ public interface AoeWarningConfig extends Config
 	}
 
 	@ConfigItem(
-			keyName = "warden",
-			name = "Warden",
-			description = "Configures if Warden stunlock and bomb AOEs are shown",
-			section = npcTitle,
-			position = 21
+		keyName = "warden",
+		name = "Warden",
+		description = "Mark where the Wardens' stunlock and bomb attacks land",
+		position = 9,
+		section = npcTitle
 	)
 	default boolean isWardenEnabled()
 	{
 		return true;
 	}
 
-	@ConfigSection(
-		name = "Custom AOEs",
-		description = "",
-		position = 22
-	)
-	String customAoesTitle = "Custom AOEs";
-
 	@ConfigItem(
 		keyName = "customAoes",
-		name = "Custom AOEs",
-		description = "Enter each custom AoE as {projectile ID, radius}, for example {1234,1},{5678,0}. Radius is tiles around the target tile: 0 = 1 tile, 1 = 3x3, 2 = 5x5, up to 7. Listed built-in IDs override their normal toggle and radius.",
-		section = customAoesTitle,
-		position = 23
+		name = "Custom AoE list",
+		description = "One entry per line: projectile ID, radius. Radius is tiles around the target tile, up to 7: "
+			+ "0 = just the tile, 1 = 3x3, 2 = 5x5. Listed built-in IDs override their normal toggle and radius. "
+			+ "Example: 1234, 1",
+		position = 10,
+		section = npcTitle
 	)
 	default String customAoes()
 	{
 		return "";
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "overlayColor",
+		name = "Border color",
+		description = "Outline color of the marked area",
+		position = 0,
+		section = appearanceSection
+	)
+	default Color overlayColor()
+	{
+		return new Color(0, 150, 200, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "fillColor",
+		name = "Fill color",
+		description = "Fill color of the marked area",
+		position = 1,
+		section = appearanceSection
+	)
+	default Color fillColor()
+	{
+		return new Color(0, 150, 200, 25);
+	}
+
+	@Range(min = 1, max = 5)
+	@ConfigItem(
+		keyName = "borderWidth",
+		name = "Border width",
+		description = "Thickness of the outline",
+		position = 2,
+		section = appearanceSection
+	)
+	default int borderWidth()
+	{
+		return 1;
+	}
+
+	@ConfigItem(
+		keyName = "tickTimers",
+		name = "Show ticks remaining",
+		description = "Show how many ticks until each attack lands",
+		position = 3,
+		section = appearanceSection
+	)
+	default boolean tickTimers()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "fade",
+		name = "Fade out",
+		description = "Fade the areas as their duration runs out",
+		position = 4,
+		section = appearanceSection
+	)
+	default boolean isFadeEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "font",
+		name = "Font",
+		description = "Font used for the overlay text",
+		position = 5,
+		section = appearanceSection
+	)
+	default FontType font()
+	{
+		return FontType.BOLD.withSize(32);
+	}
+
+	@Range(min = 1, max = 20)
+	@Units(" tiles")
+	@ConfigItem(
+		keyName = "renderDistance",
+		name = "Render distance",
+		description = "Only draw within this many tiles of your player",
+		position = 6,
+		section = appearanceSection
+	)
+	default int renderDistance()
+	{
+		return 20;
+	}
+
+	@Units(Units.MILLISECONDS)
+	@ConfigItem(
+		keyName = "delay",
+		name = "Linger time",
+		description = "How long the marked area stays up after the attack lands",
+		position = 7,
+		section = appearanceSection
+	)
+	default int delay()
+	{
+		return 300;
 	}
 }

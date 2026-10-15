@@ -1,31 +1,34 @@
 package net.runelite.client.plugins.aoewarnings;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
+import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Projectile;
-import static net.runelite.client.plugins.aoewarnings.ColorUtil.setAlphaComponent;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayUtil;
 
 @Singleton
 public class AoeWarningOverlay extends Overlay
 {
-	private static final int FILL_START_ALPHA = 25;
-	private static final int OUTLINE_START_ALPHA = 255;
-
 	private final Client client;
 	private final AoeWarningPlugin plugin;
 	private final AoeWarningConfig config;
+
+	private BasicStroke stroke;
+	private int strokeWidth = -1;
 
 	@Inject
 	public AoeWarningOverlay(final Client client, final AoeWarningPlugin plugin, final AoeWarningConfig config)
@@ -41,7 +44,14 @@ public class AoeWarningOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		Map<Projectile, ProjectileContainer> projectiles = plugin.getProjectiles();
-		if (projectiles.isEmpty() || client.getLocalPlayer() == null)
+		if (projectiles.isEmpty())
+		{
+			return null;
+		}
+
+		final Player player = client.getLocalPlayer();
+		final LocalPoint playerLp = player == null ? null : player.getLocalLocation();
+		if (playerLp == null)
 		{
 			return null;
 		}
@@ -49,68 +59,78 @@ public class AoeWarningOverlay extends Overlay
 		// Read the clock and config once per frame rather than once per projectile.
 		final long now = System.currentTimeMillis();
 		final int tickCount = client.getTickCount();
-		final Color overlayColor = config.overlayColor();
+		final Color border = config.overlayColor();
+		final Color fill = config.fillColor();
 		final boolean fade = config.isFadeEnabled();
-		final boolean outline = config.isOutlineEnabled();
-		final boolean tickTimers = config.tickTimers();
-		final int textSize = config.textSize();
-		final int fontStyle = config.fontStyle().getFont();
-		final boolean shadows = config.shadows();
+		final boolean showTicks = config.tickTimers();
+		final int renderDistance = config.renderDistance();
+
+		final Font oldFont = graphics.getFont();
+		graphics.setFont(config.font().getFont());
+		graphics.setStroke(getStroke(config.borderWidth()));
 
 		for (ProjectileContainer proj : projectiles.values())
 		{
-			if (proj.getTargetPoint() == null || proj.isExpired(now))
+			final LocalPoint target = proj.getTargetPoint();
+			if (target == null || proj.isExpired(now))
 			{
 				continue;
 			}
 
-			final Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, proj.getTargetPoint(), proj.getAreaSize());
+			// Distance to the nearest edge of the marked area, in tiles. Skip targets in a
+			// different world view (e.g. on a boat) since scene coordinates aren't comparable.
+			if (target.getWorldView() != playerLp.getWorldView()
+				|| Math.max(Math.abs(target.getSceneX() - playerLp.getSceneX()), Math.abs(target.getSceneY() - playerLp.getSceneY())) - proj.getRadius() > renderDistance)
+			{
+				continue;
+			}
+
+			final Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, target, proj.getAreaSize());
 			if (tilePoly == null)
 			{
 				continue;
 			}
 
-			int fillAlpha = FILL_START_ALPHA;
-			int outlineAlpha = OUTLINE_START_ALPHA;
-			if (fade)
-			{
-				final double progress = (now - proj.getStartTimeMillis()) / (double) proj.getLifetime();
-				fillAlpha = (int) ((1 - progress) * FILL_START_ALPHA);
-				outlineAlpha = (int) ((1 - progress) * OUTLINE_START_ALPHA);
-			}
-			fillAlpha = applyConfigAlpha(fillAlpha, overlayColor);
-			outlineAlpha = applyConfigAlpha(outlineAlpha, overlayColor);
+			final double alphaScale = fade ? 1.0 - (now - proj.getStartTimeMillis()) / (double) proj.getLifetime() : 1.0;
+			graphics.setColor(scaleAlpha(fill, alphaScale));
+			graphics.fill(tilePoly);
+			graphics.setColor(scaleAlpha(border, alphaScale));
+			graphics.draw(tilePoly);
 
-			// Fill first so the translucent fill doesn't sit on top of the outline and timer text.
-			graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), fillAlpha), true));
-			graphics.fillPolygon(tilePoly);
-
-			if (outline)
+			final int ticksLeft = proj.getFinalTick() - tickCount;
+			if (showTicks && ticksLeft >= 0)
 			{
-				graphics.setColor(new Color(setAlphaComponent(overlayColor.getRGB(), outlineAlpha), true));
-				graphics.drawPolygon(tilePoly);
-			}
-
-			final int tickProgress = proj.getFinalTick() - tickCount;
-			if (tickTimers && tickProgress >= 0)
-			{
-				OverlayUtil.renderTextLocation(graphics, Integer.toString(tickProgress), textSize, fontStyle,
-					tickProgress == 0 ? Color.RED : Color.WHITE, centerPoint(tilePoly.getBounds()), shadows, 0);
+				final String text = Integer.toString(ticksLeft);
+				final Point textLoc = Perspective.getCanvasTextLocation(client, graphics, target, text, 0);
+				if (textLoc != null)
+				{
+					// OverlayUtil already draws a black 1px shadow under the text.
+					OverlayUtil.renderTextLocation(graphics, textLoc, text, ticksLeft == 0 ? Color.RED : Color.WHITE);
+				}
 			}
 		}
 
+		graphics.setFont(oldFont);
 		return null;
 	}
 
-	private static int applyConfigAlpha(int alpha, Color color)
+	private BasicStroke getStroke(int width)
 	{
-		return Math.max(0, Math.min(255, alpha * color.getAlpha() / 255));
+		if (stroke == null || strokeWidth != width)
+		{
+			stroke = new BasicStroke(width);
+			strokeWidth = width;
+		}
+		return stroke;
 	}
 
-	private static Point centerPoint(Rectangle rect)
+	private static Color scaleAlpha(Color color, double scale)
 	{
-		int x = (int) (rect.getX() + rect.getWidth() / 2);
-		int y = (int) (rect.getY() + rect.getHeight() / 2);
-		return new Point(x, y);
+		if (scale >= 1.0)
+		{
+			return color;
+		}
+		int alpha = (int) Math.round(color.getAlpha() * Math.max(0.0, scale));
+		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 	}
 }

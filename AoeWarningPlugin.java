@@ -32,8 +32,8 @@ import org.apache.commons.lang3.ArrayUtils;
 @PluginDescriptor(
 	name = "<html><font color=#b82584>[J] AoE Warnings",
 	enabledByDefault = false,
-	description = "Shows the final destination for AoE Attack projectiles",
-	tags = {"bosses", "combat", "pve", "overlay"}
+	description = "Marks where AoE attack projectiles will land",
+	tags = {"aoe", "projectile", "bosses", "combat", "pve", "overlay"}
 )
 public class AoeWarningPlugin extends Plugin
 {
@@ -41,7 +41,8 @@ public class AoeWarningPlugin extends Plugin
 	private static final String CUSTOM_AOES_KEY = "customAoes";
 	private static final int VERZIK_REGION = 12611;
 	private static final int MAX_CUSTOM_RADIUS = 7;
-	private static final Pattern CUSTOM_AOE_PATTERN = Pattern.compile("\\{\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\}");
+	// One "ID, radius" pair per line; the older {ID,radius},{ID,radius} format still works.
+	private static final Pattern CUSTOM_AOE_PATTERN = Pattern.compile("\\{?[ \\t]*(\\d+)[ \\t]*,[ \\t]*(\\d+)[ \\t]*\\}?");
 
 	@Getter(AccessLevel.PACKAGE)
 	private final Set<CrystalBomb> bombs = new HashSet<>();
