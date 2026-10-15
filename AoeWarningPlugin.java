@@ -40,6 +40,7 @@ public class AoeWarningPlugin extends Plugin
 	private static final String CONFIG_GROUP = "aoe";
 	private static final String CUSTOM_AOES_KEY = "customAoes";
 	private static final int VERZIK_REGION = 12611;
+	private static final int MAX_CUSTOM_RADIUS = 7;
 	private static final Pattern CUSTOM_AOE_PATTERN = Pattern.compile("\\{\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\}");
 
 	@Getter(AccessLevel.PACKAGE)
@@ -50,7 +51,7 @@ public class AoeWarningPlugin extends Plugin
 	private final Map<Projectile, ProjectileContainer> projectiles = new HashMap<>();
 
 	// Parsed once from config instead of re-running the regex several times per projectile event.
-	private final Map<Integer, Integer> customAoeSizes = new HashMap<>();
+	private final Map<Integer, Integer> customAoeRadii = new HashMap<>();
 
 	@Inject
 	public AoeWarningConfig config;
@@ -88,7 +89,7 @@ public class AoeWarningPlugin extends Plugin
 		overlayManager.remove(coreOverlay);
 		overlayManager.remove(bombOverlay);
 		reset();
-		customAoeSizes.clear();
+		customAoeRadii.clear();
 	}
 
 	@Subscribe
@@ -106,21 +107,21 @@ public class AoeWarningPlugin extends Plugin
 		final Projectile projectile = event.getProjectile();
 		final int id = projectile.getId();
 
-		final Integer customSize = customAoeSizes.get(id);
-		final AoeProjectileInfo projectileInfo = customSize == null ? AoeProjectileInfo.getById(id) : null;
-		if (customSize == null && (projectileInfo == null || !isConfigEnabled(projectileInfo)))
+		final Integer customRadius = customAoeRadii.get(id);
+		final AoeProjectileInfo projectileInfo = customRadius == null ? AoeProjectileInfo.getById(id) : null;
+		if (customRadius == null && (projectileInfo == null || !isConfigEnabled(projectileInfo)))
 		{
 			return;
 		}
 
-		final int aoeSize = customSize != null ? customSize : projectileInfo.getAoeSize();
+		final int radius = customRadius != null ? customRadius : projectileInfo.getRadius();
 		final int remainingCycles = projectile.getRemainingCycles();
 		final int lifetime = config.delay() + (remainingCycles * 20);
 		// Custom ids always get tick timers; Vasa's ranged AoE never does.
 		final int ticksRemaining = projectileInfo == AoeProjectileInfo.VASA_RANGED_AOE ? 0 : remainingCycles / 30;
 		final int tickCycle = client.getTickCount() + ticksRemaining;
 
-		projectiles.put(projectile, new ProjectileContainer(projectile, System.currentTimeMillis(), lifetime, tickCycle, event.getPosition(), aoeSize));
+		projectiles.put(projectile, new ProjectileContainer(projectile, System.currentTimeMillis(), lifetime, tickCycle, event.getPosition(), radius));
 	}
 
 	@Subscribe
@@ -201,18 +202,18 @@ public class AoeWarningPlugin extends Plugin
 
 	private void rebuildCustomAoes()
 	{
-		customAoeSizes.clear();
+		customAoeRadii.clear();
 		Matcher matcher = CUSTOM_AOE_PATTERN.matcher(config.customAoes());
 		while (matcher.find())
 		{
 			try
 			{
 				int id = Integer.parseInt(matcher.group(1));
-				int size = Integer.parseInt(matcher.group(2));
-				if (size >= 1 && size <= 15)
+				int radius = Integer.parseInt(matcher.group(2));
+				if (radius >= 0 && radius <= MAX_CUSTOM_RADIUS)
 				{
 					// First valid entry for an id wins, matching the previous behaviour.
-					customAoeSizes.putIfAbsent(id, size);
+					customAoeRadii.putIfAbsent(id, radius);
 				}
 			}
 			catch (NumberFormatException ignored)

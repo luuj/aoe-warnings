@@ -285,7 +285,7 @@ public interface AoeWarningConfig extends Config
 	@ConfigItem(
 		keyName = "customAoes",
 		name = "Custom AOEs",
-		description = "Enter each custom AoE as {projectile ID, size}, for example {1234,3},{5678,1}. Sizes must be between 1 and 15. Listed built-in IDs override their normal toggle and size.",
+		description = "Enter each custom AoE as {projectile ID, radius}, for example {1234,1},{5678,0}. Radius is tiles around the target tile: 0 = 1 tile, 1 = 3x3, 2 = 5x5, up to 7. Listed built-in IDs override their normal toggle and radius.",
 		section = customAoesTitle,
 		position = 23
 	)

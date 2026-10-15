@@ -64,7 +64,7 @@ public class AoeWarningOverlay extends Overlay
 				continue;
 			}
 
-			final Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, proj.getTargetPoint(), proj.getAoeSize());
+			final Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, proj.getTargetPoint(), proj.getAreaSize());
 			if (tilePoly == null)
 			{
 				continue;

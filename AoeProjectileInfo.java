@@ -5,21 +5,21 @@ import java.util.Map;
 
 public enum AoeProjectileInfo
 {
-	LIZARDMAN_SHAMAN_AOE(1293, 5),
-	ICE_DEMON_RANGED_AOE(1324, 3),
-	ICE_DEMON_ICE_BARRAGE_AOE(366, 3),
-	KEPHRI_FIREBALL(2266,3),
-	KEPHRI_DRONE(2147,3),
-	ZEBAK_SPLAT1(1555,1),
-	ZEBAK_SPLAT2(2194,1),
-	WARDEN_STUN(2210,1),
-	WARDEN_BOMB(2225,7),
-	VASA_AWAKEN_AOE(1327, 3),
-	VASA_RANGED_AOE(1329, 3),
-	TEKTON_METEOR_AOE(660, 3),
-	OLM_FALLING_CRYSTAL(1357, 3),
-	VERZIK_PURPLE_SPAWN(1586, 3),
-	VERZIK_P1_ROCKS(1435, 1);
+	LIZARDMAN_SHAMAN_AOE(1293, 2),
+	ICE_DEMON_RANGED_AOE(1324, 1),
+	ICE_DEMON_ICE_BARRAGE_AOE(366, 1),
+	KEPHRI_FIREBALL(2266, 1),
+	KEPHRI_DRONE(2147, 1),
+	ZEBAK_SPLAT1(1555, 0),
+	ZEBAK_SPLAT2(2194, 0),
+	WARDEN_STUN(2210, 0),
+	WARDEN_BOMB(2225, 3),
+	VASA_AWAKEN_AOE(1327, 1),
+	VASA_RANGED_AOE(1329, 1),
+	TEKTON_METEOR_AOE(660, 1),
+	OLM_FALLING_CRYSTAL(1357, 1),
+	VERZIK_PURPLE_SPAWN(1586, 1),
+	VERZIK_P1_ROCKS(1435, 0);
 
 	private static final Map<Integer, AoeProjectileInfo> map = new HashMap<>();
 
@@ -36,16 +36,14 @@ public enum AoeProjectileInfo
 	 */
 	private final int id;
 	/**
-	 * How long the indicator should last for this AoE warning This might
-	 * need to be a bit longer than the projectile actually takes to land as
-	 * there is a fade effect on the warning
+	 * Radius in tiles around the target tile (0 = just the target tile, 1 = 3x3, 2 = 5x5).
 	 */
-	private final int aoeSize;
+	private final int radius;
 
-	AoeProjectileInfo(int id, int aoeSize)
+	AoeProjectileInfo(int id, int radius)
 	{
 		this.id = id;
-		this.aoeSize = aoeSize;
+		this.radius = radius;
 	}
 
 	public static AoeProjectileInfo getById(int id)
@@ -58,8 +56,8 @@ public enum AoeProjectileInfo
 		return id;
 	}
 
-	public int getAoeSize()
+	public int getRadius()
 	{
-		return aoeSize;
+		return radius;
 	}
 }
